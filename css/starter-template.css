@@ -5,6 +5,10 @@ body {
   padding: 40px 15px;
   text-align: center;
 }
+.starter-template pre {
+  text-align: left;
+  width: 550px;
+}
 .title {
   font-weight: bold;
 }

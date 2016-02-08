@@ -18,6 +18,8 @@
     <!-- Custom styles for this template -->
     <link href="../css/starter-template.css" rel="stylesheet">
 
+    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
@@ -50,7 +52,23 @@
 
       <div class="starter-template">
         <h2>Tornado task</h2>
-        <p >Use this document as a way to quickly start any new project.<br> All you get is this text and a mostly barebones HTML document.</p>
+<p>
+There are a few ways to implement asynchrous function execution. The new and recommended way is to use a coroutine. There is also this old way of using gen.engine:
+<pre class="prettyprint lang-python">
+from tornado import gen, ioloop
+
+def do_work(num, callback=None):
+    num = num * 10
+    callback({'result': num})
+
+@gen.engine
+def foo():
+    result = yield gen.Task(do_work, 10)
+    print result
+
+ioloop.IOLoop.current().run_sync(foo)
+</pre>
+</p>
       </div>
 
     </div><!-- /.container -->
