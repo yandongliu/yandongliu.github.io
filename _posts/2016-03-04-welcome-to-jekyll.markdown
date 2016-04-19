@@ -1,25 +1,62 @@
 ---
 layout: post
-title:  "Welcome to Jekyll2!"
+title:  "Non-blocking programming with Tornado"
 date:   2016-03-04 17:12:22 -0800
-categories: jekyll update
+categories: python tornado
 ---
-2You’ll find this post in your `_posts` directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run `jekyll serve`, which launches a web server and auto-regenerates your site when a file is updated.
+`Tornado` is an asynchronous networking library. It's also a Web framework so you can write a whole website with it.
 
-To add new posts, simply add a file in the `_posts` directory that follows the convention `YYYY-MM-DD-name-of-post.ext` and includes the necessary front matter. Take a look at the source for this post to get an idea about how it works.
+With Synchorous/blocking programming everything works sequentially: one function does its work and returns. If there is an I/O piece in it then its execution blocks until it finishes. When there is ten of thousands of excutions of such blocking functions a lot of CPU cycles are wasted doing nothing.
 
-Jekyll also offers powerful support for code snippets:
+On the other hand non-blocking functions can return early to give CPU away, and a callback is triggered when that blocking event finishes. In `Tornado` the result early returned is called `Future`, and its result will be populated when that I/O work finishes.
 
-{% highlight ruby %}
-def print_hi(name)
-  puts "Hi, #{name}"
-end
-print_hi('Tom')
-#=> prints 'Hi, Tom' to STDOUT.
+
+{% highlight python %}
+def foo():
+    future = SomeIOWork()
+    future.add_done_callback(lambda f: future.set_result(f.result()))
+    return future
 {% endhighlight %}
 
-Check out the [Jekyll docs][jekyll-docs] for more info on how to get the most out of Jekyll. File all bugs/feature requests at [Jekyll’s GitHub repo][jekyll-gh]. If you have questions, you can ask them on [Jekyll Talk][jekyll-talk].
+All this work is managed by its `IOLoop` behind the scene. If you look at above code it looks like nothing but getting the result from a dependent future, wrapping it in a new future and passing it out. To simplify this diagram one can simply use `coroutine` which essentially does above work for you:
 
-[jekyll-docs]: http://jekyllrb.com/docs/home
-[jekyll-gh]:   https://github.com/jekyll/jekyll
-[jekyll-talk]: https://talk.jekyllrb.com/
+{% highlight python %}
+@coroutine
+def foo():
+    result = yield SomeIOWork()
+    raise Return(result)  # for Python 2.7
+{% endhighlight %}
+
+## Some notes on writing Tornado code:
+* Everything has to be non-blocking. Wrapping blocking code with `@coroutine` doesn't help.
+* Yield a list of futures whenever you can. It's a lot faster than yield one by one.
+* By reading the code it looks like a `coroutine` wouldn't return until it finishes first `yield` and this happens recursively. Therefore if you have lots of heavy work through first yield I doubt if it will be a lot faster.
+
+## Coroutine performance benchmarking
+Let's write a small HTTP endpoint in 3 different ways:
+
+* **Asynchronous**: coroutine everywhere so nothing is blocking
+* **Synchronous**: no coroutine
+* **Sync + Coroutine**: coroutine everywhere except the HTTP client is blocking (`request`)
+
+And here's the result (response time in *ms*):
+
+*100 connections with 20 concurrency: `ab -n 100 -c 20 http://localhost:8080/`*
+
+|         | Median           | p90%  | p99% |
+| ------------- |:-------------:| -----:| -----:|
+| Async | 2849 | 3366 | 4226 |
+| Sync | 22654 | 20304.3 | 137895 |
+| Sync + Coroutine | 28177 | 29944 | 158050 |
+
+
+*500 connections with 50 concurrency: `ab -n 500 -c 50 http://localhost:8080/`*
+
+| | Median           | p90%  | p99% |
+| ------------- |:-------------:| -----:| -----:|
+| Async | 7096 | 7484 | 7846 |
+| Sync | 65687 | 71212 | 346269 |
+| Sync + Coroutine | 66669 | 69700 | 341134 |
+
+<br/>
+If you can leverage truly non-blocking code everywhere it seems to be a huge performance boost. But any blocking code will slow it down if you execute it somewhere in the main `IOLoop`. In that case you may need to have a `Runner` in a different thread so that it doesn't block your primary IOLoop.
