@@ -39,6 +39,71 @@ Let's write a small HTTP endpoint in 3 different ways:
 * **Synchronous**: no coroutine
 * **Sync + Coroutine**: coroutine everywhere except the HTTP client is blocking (`request`)
 
+*Asynchronous* version:
+
+{% highlight python %}
+@gen.coroutine
+def urls_to_check():
+    return [
+        'http://google.com',
+        'http://yahoo.com',
+        'http://amazon.com',
+    ]
+
+
+class StatusCheckHandler(tornado.web.RequestHandler):
+    @gen.coroutine
+    def check_status(self, url):
+        client = AsyncHTTPClient()
+        try:
+            response = yield client.fetch(url)
+        except Exception as e:
+            raise gen.Return(('error', str(e)))
+        raise gen.Return(('http-status', response.code))
+
+    @gen.coroutine
+    def get(self):
+        statuses = {}
+        status_futures = {
+            url: self.check_status(url) for url in urls_to_check()
+        }
+        statuses = yield status_futures
+        self.write(json.dumps(statuses))
+
+def get_app():
+    return tornado.web.Application([
+        (r'/', StatusCheckHandler),
+    ], debug=True, autoreload=True)
+
+if __name__ == '__main__':
+    app = get_app()
+    app.listen(8080)
+    tornado.ioloop.IOLoop.current().start()
+{% endhighlight %}
+
+*Synchronous* version: replace `AsyncHTTPClient` with `requests`:
+{% highlight python %}
+...
+def check_status(url):
+    try:
+        return ('http-status', requests.get(url).status_code)
+    except Exception as e:
+        return ('error', str(e))
+...
+{% endhighlight %}
+
+*Coroutine* version: wrap synchronous calls in a coroutine
+{% highlight python %}
+...
+@gen.coroutine
+def check_status(url):
+    try:
+        raise gen.Return(('http-status', requests.get(url).status_code))
+    except Exception as e:
+        raise gen.Return(('error', str(e)))
+...
+{% endhighlight %}
+
 And here's the result (response time in *ms*):
 
 *100 connections with 20 concurrency: `ab -n 100 -c 20 http://localhost:8080/`*
