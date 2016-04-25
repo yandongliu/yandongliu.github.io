@@ -46,7 +46,7 @@ Let's write a small HTTP endpoint in 3 different ways:
 def urls_to_check():
     return [
         'http://google.com',
-        'http://yahoo.com',
+        'http://wikipedia.org',
         'http://amazon.com',
     ]
 
@@ -110,18 +110,18 @@ And here's the result (response time in *ms*):
 
 |         | Median           | p90%  | p99% |
 | ------------- |:-------------:| -----:| -----:|
-| Async | 2849 | 3366 | 4226 |
-| Sync | 22654 | 20304.3 | 137895 |
-| Sync + Coroutine | 28177 | 29944 | 158050 |
+| Async | 4013 | 4521 | 4945 |
+| Sync | 8085 | 8390 | 8683 |
+| Sync + Coroutine | 30422 | 31565 | 32665 |
 
 
 *500 connections with 50 concurrency: `ab -n 500 -c 50 http://localhost:8080/`*
 
 | | Median           | p90%  | p99% |
 | ------------- |:-------------:| -----:| -----:|
-| Async | 7096 | 7484 | 7846 |
-| Sync | 65687 | 71212 | 346269 |
-| Sync + Coroutine | 66669 | 69700 | 341134 |
+| Async | 9131 | 9381 | 9894 |
+| Sync | 21510 | 22215 | 22833 |
+| Sync + Coroutine | 77701 | 79787 | 81497 |
 
 <br/>
 If you can leverage truly non-blocking code everywhere it seems to be a huge performance boost. But any blocking code will slow it down if you execute it somewhere in the main `IOLoop`. In that case you may need to have a `Runner` in a different thread so that it doesn't block your primary IOLoop.

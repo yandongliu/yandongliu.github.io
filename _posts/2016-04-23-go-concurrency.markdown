@@ -68,5 +68,33 @@ And here's the result (response time in *ms*):
 
 |         | Median           | p90%  | p99% |
 | ------------- |:-------------:| -----:| -----:|
-| 100 requests + 20 concurrency | | | |
-| 500 requests + 50 concurrency | |  | |
+| 100 requests + 20 concurrency | 611 | 790 | 811 |
+| 500 requests + 50 concurrency | 712 | 933  | 1747 |
+
+<br/>
+Since go multiplexes goroutines to OS threads it likely has a much better concurrency model than Tornado's. In Tornado we manually choose when to yield execution to other coroutines while for go it's all managed for you.
+
+## Conclusion
+`Go` won hands-down.
+
+For this particular use case it is almost all about I/O (fetching 3 URLs and return) and the fastest I could get from Tornado was 4013ms as the median response time. So yeah looks like Go is about 7 times faster.
+
+If your handler involves less I/O mostly CPU work then Go will likely be way way faster.
+
+In reality our handler work will be somewhere in between so I might say by using Go you get a 20X perf boost for free (if you code it in the right way).
+
+If I change the handler work to be a simple for loop:
+{% highlight go %}
+func DoWork(num int, c chan int) {
+        sum := 0
+        for i := 1; i < num; i++ {
+                sum += i
+        }
+        c <- sum
+}
+{% endhighlight %}
+
+|         | Median           | p90%  | p99% |
+| ------------- |:-------------:| -----:| -----:|
+| go | 112 | 166 | 238 |
+| python/tornado | 1854 | 3314  | 11197 |
