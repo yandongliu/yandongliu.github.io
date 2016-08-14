@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Write a REST service"
+title:  "How to architecture a REST service"
 date:   2016-04-18 17:12:22 -0800
 categories: python go rest architecture
 ---
