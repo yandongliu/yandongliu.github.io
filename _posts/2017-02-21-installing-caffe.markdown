@@ -2,7 +2,7 @@
 layout: post
 title:  "Notes on installing Caffe on Debian/Ubuntu"
 date:   2017-02-21 16:12:22 -0800
-categories: caffe
+categories: deep-learning caffe
 ---
 # Install system dependencies
 `sudo apt-get install` following:

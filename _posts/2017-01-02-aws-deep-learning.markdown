@@ -2,7 +2,7 @@
 layout: post
 title:  "Notes on running deep learning libs on AWS"
 date:   2017-01-02 16:12:22 -0800
-categories: aws deep-learning
+categories: deep-learning aws
 ---
 Some notes on running deep learning on AWS.
 
