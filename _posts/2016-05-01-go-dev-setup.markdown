@@ -1,46 +1,26 @@
 ---
 layout: post
 title:  "Go Development Env Setup"
-date:   2016-05-01 16:12:22 -0800
+date:   2018-05-21 16:12:22 -0800
 categories: go
 ---
 
-## Prepare the language
+## Install the SDK
+  - brew update
+  - brew install golang
+
+## Environment
 add to `.bash_profile`:
 
   - export GOPATH=$HOME/go
   - export PATH=$PATH:$GOPATH/bin
 
 ## Prepare your editor
-  - install Microsoft Visual Studio Code
-  - install go plugin: CMD + P, type `exp install go`
-  - Update user setting
-{% highlight json %}
-{
-    "go.buildOnSave": true,
-    "go.lintOnSave": true,
-    "go.vetOnSave": true,
-    "go.buildFlags": [],
-    "go.lintFlags": [],
-    "go.vetFlags": [],
-    "go.coverOnSave": false,
-    "go.useCodeSnippetsOnFunctionSuggest": false,
-    "go.formatOnSave": true,
-    "go.gopath": "/Users/<username>/go",
-    "go.formatTool": "goreturns",
-    "editor.cursorBlinking": "visible",
-    "editor.tabSize": 4,
-    "editor.glyphMargin": true,
-    "editor.lineNumbers": true,
-    "editor.rulers": [100],
-    "editor.formatOnType": true,
-    "editor.scrollBeyondLastLine": false,
-    "files.trimTrailingWhitespace": true,
-    "files.autoSave": "onFocusChange"
-}
-{% endhighlight %}
+A good reference: https://code.visualstudio.com/docs/languages/go
 
-## Run/Debug/Test Go code
+  - install Microsoft Visual Studio Code
+
+## Run/Debug/Test Go code(if you want to)
 
 First open a work folder, then configure task.json (CMD+P: >Task):
 I found follow paste from Web:
@@ -73,5 +53,12 @@ I found follow paste from Web:
 }
 {% endhighlight %}
 Then you can do Choose `Go Run` in tasks to run your code.
+
+Alternatively you can press `Ctrl + `` to open a terminal tab.
+
+Use `https://github.com/codegangsta/gin` for auto reload.
+
+## Others
+run `defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false` to enable key repeat.
 
 ## Start writing Go!
